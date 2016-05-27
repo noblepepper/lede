@@ -3,8 +3,8 @@
 #include "mt7628an.dtsi"
 
 / {
-	compatible = "xiaomi,MiWifi Nano", "mediatek,mt7628an-soc";
-	model = "MiWiFi Nano";
+	compatible = "vocore,vocore2", "mediatek,mt7628an-soc";
+	model = "VoCore2";
 
 	chosen {
 		bootargs = "console=ttyS0,57600";
