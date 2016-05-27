@@ -81,6 +81,7 @@ ramips_setup_interfaces()
 	psg1208|\
 	sap-g3200u3|\
 	sk-wb8|\
+	vocore2|\
 	wf-2881|\
 	whr-300hp2|\
 	whr-600d|\
