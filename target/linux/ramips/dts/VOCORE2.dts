@@ -7,7 +7,7 @@
 	model = "VoCore2";
 
 	chosen {
-		bootargs = "console=ttyS0,57600";
+		bootargs = "console=ttyS0,460800";
 	};
 
 	memory@0 {
@@ -52,6 +52,10 @@
 	};
 };
 
+&uartlite {
+	clock-frequency = <160000000>;
+};
+
 &wmac {
 	status = "okay";
 };
@@ -85,7 +89,6 @@
 		partition@30000 {
 			label = "u-boot-env";
 			reg = <0x30000 0x10000>;
-			read-only;
 		};
 
 		factory: partition@40000 {
@@ -96,7 +99,7 @@
 
 		partition@50000 {
 			label = "firmware";
-			reg = <0x50000 0x7b0000>;
+			reg = <0x50000 0xfb0000>;
 		};
 	};
 };
