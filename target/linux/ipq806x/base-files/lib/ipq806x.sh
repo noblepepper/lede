@@ -17,6 +17,9 @@ ipq806x_board_detect() {
 	*"AP148")
 		name="ap148"
 		;;
+	*"C2600")
+		name="c2600"
+		;;
 	*"D7800")
 		name="d7800"
 		;;
@@ -25,6 +28,9 @@ ipq806x_board_detect() {
 		;;
 	*"R7500")
 		name="r7500"
+		;;
+	*"Linksys EA8500"*)
+		name="ea8500"
 		;;
 	esac
 

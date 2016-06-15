@@ -794,6 +794,9 @@ ar71xx_board_detect() {
 	*"Telldus TellStick ZNet Lite")
 		name="tellstick-znet-lite"
 		;;
+	*SOM9331)
+		name="som9331"
+		;;
 	*TEW-632BRP)
 		name="tew-632brp"
 		;;
@@ -916,6 +919,9 @@ ar71xx_board_detect() {
 		;;
 	*"TL-WR841N/ND v9")
 		name="tl-wr841n-v9"
+		;;
+	*"TL-WR841N/ND v11")
+		name="tl-wr841n-v11"
 		;;
 	*"TL-WR842N/ND v2")
 		name="tl-wr842n-v2"
@@ -1048,6 +1054,9 @@ ar71xx_board_detect() {
 		;;
 	*WRT400N)
 		name="wrt400n"
+		;;
+	*"WRTnode2Q board")
+		name="wrtnode2q"
 		;;
 	*"WZR-450HP2")
 		name="wzr-450hp2"

@@ -10,19 +10,14 @@ Signed-off-by: John Crispin <john@phrozen.org>
  MAINTAINERS |    2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 73f0592..c044320 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6904,7 +6904,7 @@ F:	include/uapi/linux/uvcvideo.h
+@@ -6909,7 +6909,7 @@ F:	include/uapi/linux/uvcvideo.h
  
  MEDIATEK ETHERNET DRIVER
- M:	Felix Fietkau <nbd@openwrt.org>
+ M:	Felix Fietkau <nbd@nbd.name>
 -M:	John Crispin <blogic@openwrt.org>
 +M:	John Crispin <john@phrozen.org>
  L:	netdev@vger.kernel.org
  S:	Maintained
  F:	drivers/net/ethernet/mediatek/
--- 
-1.7.10.4
-

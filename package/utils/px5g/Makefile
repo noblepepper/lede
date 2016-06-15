@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2015 Jo-Philipp Wich <jow@openwrt.org>
+# Copyright (C) 2010-2015 Jo-Philipp Wich <jo@mein.io>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,7 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=px5g
-PKG_RELEASE:=3
+PKG_RELEASE:=4
+PKG_LICENSE:=LGPL-2.1
 
 PKG_USE_MIPS16:=0
 
@@ -18,7 +19,7 @@ define Package/px5g
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=X.509 certificate generator (using PolarSSL)
-  MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
+  MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
   DEPENDS:=+libpolarssl
 endef
 

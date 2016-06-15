@@ -50,6 +50,7 @@ platform_check_image() {
 	dir-620-a1|\
 	dir-620-d1|\
 	dir-810l|\
+	duzun-dm06|\
 	e1700|\
 	esr-9753|\
 	ex2700|\
@@ -130,6 +131,7 @@ platform_check_image() {
 	whr-300hp2|\
 	whr-600d|\
 	whr-g300n|\
+	widora-neo|\
 	witi|\
 	wizfi630a|\
 	wl-330n|\
@@ -181,7 +183,8 @@ platform_check_image() {
 		}
 		return 0
 		;;
-	c20i)
+	c20i|\
+	c50)
 		[ "$magic" != "03000000" ] && {
 			echo "Invalid image type."
 			return 1

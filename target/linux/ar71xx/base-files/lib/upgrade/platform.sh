@@ -272,7 +272,8 @@ platform_check_image() {
 	unifiac-pro | \
 	unifi-outdoor | \
 	carambola2 | \
-	weio )
+	weio | \
+	wrtnode2q)
 		[ "$magic" != "2705" ] && {
 			echo "Invalid image type."
 			return 1
@@ -349,6 +350,7 @@ platform_check_image() {
 	onion-omega | \
 	oolite | \
 	smart-300 | \
+	som9331 | \
 	tellstick-znet-lite | \
 	tl-mr10u | \
 	tl-mr11u | \
@@ -388,6 +390,7 @@ platform_check_image() {
 	tl-wr841n-v7 | \
 	tl-wr841n-v8 | \
 	tl-wr841n-v9 | \
+	tl-wr841n-v11 | \
 	tl-wr842n-v2 | \
 	tl-wr842n-v3 | \
 	tl-wr941nd | \

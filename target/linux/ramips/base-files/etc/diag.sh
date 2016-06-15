@@ -83,6 +83,9 @@ get_status_led() {
 	wrh-300cr)
 		status_led="$board:green:wps"
 		;;
+	c50)
+		status_led="tp-link:blue:power"
+		;;
 	cf-wr800n|\
 	psg1208)
 		status_led="$board:white:wps"
@@ -156,7 +159,8 @@ get_status_led() {
 	re6500|\
 	whr-1166d|\
 	whr-300hp2|\
-	whr-600d)
+	whr-600d|\
+	widora-neo)
 		status_led="$board:orange:wifi"
 		;;
 	mzk-ex300np|\

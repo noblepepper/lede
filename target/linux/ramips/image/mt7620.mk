@@ -7,13 +7,10 @@ define Build/tplink-header
 		-o $@.new -k $@  && mv $@.new $@
 endef
 
-define Build/pad-ex2700
-	cat ex2700-fakeroot.uImage >> $@; cat ex2700-fakeroot.uImage >> $@;
-	dd if=$@ of=$@.new bs=64k conv=sync && truncate -s 128 $@.new && mv $@.new $@
-endef
-
-define Build/append-ex2700
-	cat ex2700-fakeroot.uImage >> $@
+define Build/pad-kernel-ex2700
+	cp $@ $@.tmp && dd if=/dev/zero bs=64 count=1 >> $@.tmp \
+		&& dd if=$@.tmp of=$@.new bs=64k conv=sync && truncate -s -64 $@.new \
+		&& cat ex2700-fakeroot.uImage >> $@.new && rm $@.tmp && mv $@.new $@
 endef
 
 define Build/netgear-header
@@ -53,12 +50,21 @@ define Device/ArcherC20i
 endef
 TARGET_DEVICES += ArcherC20i
 
+define Device/ArcherC50
+  DTS := ArcherC50
+  KERNEL := $(KERNEL_DTB)
+  KERNEL_INITRAMFS := $(KERNEL_DTB) | tplink-header ArcherC50 -c
+  IMAGE/sysupgrade.bin := append-kernel | tplink-header ArcherC50 -j -r $(KDIR)/root.squashfs
+  DEVICE_TITLE := TP-Link ArcherC50
+endef
+TARGET_DEVICES += ArcherC50
+
 ex2700_mtd_size=3866624
 define Device/ex2700
   DTS := EX2700
   IMAGE_SIZE := $(ex2700_mtd_size)
   IMAGES += factory.bin
-  KERNEL := $(KERNEL_DTB) | pad-ex2700 | uImage lzma | append-ex2700
+  KERNEL := $(KERNEL_DTB) | uImage lzma | pad-kernel-ex2700
   IMAGE/factory.bin := $$(IMAGE/sysupgrade.bin) | netgear-header -B EX2700 -H 29764623+4+0+32+2x2+0
   DEVICE_TITLE := Netgear EX2700
 endef
