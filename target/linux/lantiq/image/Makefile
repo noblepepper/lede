@@ -57,14 +57,6 @@ define Image/Build/squashfs
 	$(call prepare_generic_squashfs,$(BIN_DIR)/$(IMG_PREFIX)-$(2)-$(1).image)
 endef
 
-ifneq ($($(PROFILE)_UBI_OPTS),)
-  define Image/BuildNAND/squashfs
-	$(call prepare_generic_squashfs,$(KDIR)/root.$(1))
-	$(call Image/Build/UbinizeImage,$(PROFILE),,squashfs,$($(PROFILE)_UBI_OPTS))
-	$(call Image/Build/SysupgradeNAND,$(PROFILE),$(1),$(KDIR)/uImage-$(PROFILE))
-  endef
-endif
-
 DGN3500_SKERNEL=0x50000
 DGN3500_SKERNEL_DECIMAL=327680
 define Image/BuildDGN3500/squashfs
@@ -107,19 +99,6 @@ define Image/BuildEVA/squashfs
 	$(call prepare_generic_squashfs,$(BIN_DIR)/$(IMG_PREFIX)-$(2)-$(1).image.eva)
 endef
 
-ifneq ($($(PROFILE)_UBIFS_OPTS),)
-  define Image/BuildEVA/ubifs
-	$(CP) $(KDIR)/root.ubifs $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs.ubifs
-  endef
-endif
-
-ifneq ($($(PROFILE)_UBI_OPTS),)
-  define Image/BuildEVA/ubi
-	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs.ubi
-	$(CP) $(KDIR)/root-overlay.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs-overlay.ubi
-  endef
-endif
-
 define Image/BuildLoader/squashfs
 	dd if=$(KDIR)/loader-$(2).bin of=$(KDIR)/loader-$(2).bin.padded bs=3072k conv=sync
 	cat $(KDIR)/loader-$(2).bin.padded $(KDIR)/root.$(1) > $(BIN_DIR)/$(IMG_PREFIX)-$(2)-$(1).image
@@ -144,30 +123,6 @@ define Image/Build/jffs2-256k
 	dd if=$(KDIR)/uImage-$(2) of=$(KDIR)/uImage-$(2)-$(1) bs=256k conv=sync
 	cat $(KDIR)/uImage-$(2)-$(1) $(KDIR)/root.$(1) > $(BIN_DIR)/$(IMG_PREFIX)-$(2)-$(1).image
 endef
-
-ifneq ($($(PROFILE)_UBIFS_OPTS),)
-  define Image/Build/ubifs
-	$(CP) $(KDIR)/root.ubifs $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs.ubifs
-  endef
-endif
-
-ifneq ($($(PROFILE)_UBI_OPTS),)
-  define Image/Build/ubi
-	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs.ubi
-	$(CP) $(KDIR)/root-overlay.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(PROFILE)-rootfs-overlay.ubi
-  endef
-endif
-
-
-ifneq ($($(PROFILE)_UBIFS_OPTS),)
-ifneq ($($(PROFILE)_UBI_OPTS),)
-  define Image/BuildNAND/ubifs
-	$(call Image/Build/UbinizeImage,$(PROFILE),,ubifs,$($(PROFILE)_UBI_OPTS))
-	$(call Image/Build/SysupgradeNAND,$(PROFILE),$(1),$(KDIR)/uImage-$(PROFILE))
-  endef
-endif
-endif
-
 
 ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
   define Image/BuildKernel/InitramfsTemplate
@@ -219,11 +174,6 @@ endef
 
 
 ### Kernel scripts ###
-define Build/append-dtb
-	$(call Image/BuildDTB,../dts/$(DEVICE_DTS).dts,$@.dtb)
-	cat $@.dtb >> $@
-endef
-
 define Build/mkbrncmdline
    mkbrncmdline -i $@ -o $@.new BRN-BOOT
    mv $@.new $@
@@ -231,6 +181,21 @@ endef
 
 define Build/mkbrnimg
    mkbrnimg -s $(SIGNATURE) -m $(MAGIC) -p $(CRC32_POLY) -o $@ $(word 1,$^) $(word 2,$^)
+endef
+
+define Build/fullimage
+	mkimage -A mips -O linux -C lzma -T filesystem -a 0x00  \
+		-e 0x00 -n 'LEDE RootFS' \
+		-d $(word 2,$^) $(word 2,$^).new
+
+	cat $(word 1,$^) $(word 2,$^).new > $@.tmp
+
+	mkimage -A mips -O linux -T multi -a 0x00 -C none \
+		-e 0x00 -n 'OpenWrt fullimage' \
+		-d $@.tmp $@
+
+	rm $(word 2,$^).new
+	rm $@.tmp
 endef
 
 # Shared device definition: applies to every defined device
@@ -243,11 +208,12 @@ define Device/Default
   FILESYSTEMS := squashfs
   DEVICE_PROFILE :=
   DEVICE_DTS = $$(DEVICE_PROFILE)
+  DEVICE_DTS_DIR := ../dts
   IMAGE_SIZE :=
   IMAGES := sysupgrade.bin
   IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | check-size $$$$(IMAGE_SIZE)
 endef
-DEVICE_VARS += DEVICE_PROFILE DEVICE_DTS IMAGE_SIZE
+DEVICE_VARS += DEVICE_PROFILE DEVICE_DTS DEVICE_DTS_DIR IMAGE_SIZE
 
 define Device/lantiqBrnImage
   KERNEL := kernel-bin | append-dtb | mkbrncmdline | lzma-no-dict
@@ -255,6 +221,12 @@ define Device/lantiqBrnImage
   IMAGE/factory.bin := mkbrnimg | check-size $$$$(IMAGE_SIZE)
 endef
 DEVICE_VARS += SIGNATURE MAGIC CRC32_POLY
+
+define Device/lantiqFullImage
+  KERNEL := kernel-bin | append-dtb | lzma | uImage lzma | pad-offset 4 0
+  IMAGES := sysupgrade.bin fullimage.img
+  IMAGE/fullimage.img := fullimage | check-size $$$$(IMAGE_SIZE)
+endef
 
 ifeq ($(SUBTARGET),xway_legacy)
 
@@ -326,8 +298,8 @@ endif
 ifeq ($(SUBTARGET),xway)
 
 # Danube
-BTHOMEHUBV2B_UBIFS_OPTS:="-m 512 -e 15872 -c 1959"
-BTHOMEHUBV2B_UBI_OPTS:="-m 512 -p 16KiB -s 256"
+DEVICE_BTHOMEHUBV2B_UBIFS_OPTS:="-m 512 -e 15872 -c 1959"
+DEVICE_BTHOMEHUBV2B_UBI_OPTS:="-m 512 -p 16KiB -s 256"
 
 Image/BuildKernel/Profile/BTHOMEHUBV2B=$(call Image/BuildKernel/Template,BTHOMEHUBV2B)
 Image/Build/Profile/BTHOMEHUBV2B=$(call Image/BuildNAND/$(1),$(1),BTHOMEHUBV2B)
@@ -398,6 +370,18 @@ define Device/ARV4519PW
 	swconfig
 endef
 TARGET_DEVICES += ARV4519PW
+
+define Device/ARV7506PW11
+  DEVICE_PROFILE := ARV7506PW11
+  IMAGE_SIZE := 7808k
+  DEVICE_TITLE := Alice/O2 IAD 4421 - ARV7506PW11
+  DEVICE_PACKAGES := kmod-ltq-adsl-danube-mei kmod-ltq-adsl-danube \
+	kmod-ltq-adsl-danube-fw-b kmod-ltq-atm-danube \
+	ltq-adsl-app ppp-mod-pppoa \
+	kmod-rt2800-pci wpad-mini \
+	swconfig
+endef
+TARGET_DEVICES += ARV7506PW11
 
 define Device/ARV7510PW22
   DEVICE_PROFILE := ARV7510PW22
@@ -497,8 +481,8 @@ TARGET_DEVICES += GIGASX76X
 
 
 # AR9
-BTHOMEHUBV3A_UBIFS_OPTS:="-m 512 -e 15872 -c 1959"
-BTHOMEHUBV3A_UBI_OPTS:="-m 512 -p 16KiB -s 256"
+DEVICE_BTHOMEHUBV3A_UBIFS_OPTS:="-m 512 -e 15872 -c 1959"
+DEVICE_BTHOMEHUBV3A_UBI_OPTS:="-m 512 -p 16KiB -s 256"
 
 Image/BuildKernel/Profile/BTHOMEHUBV3A=$(call Image/BuildKernel/Template,BTHOMEHUBV3A)
 Image/Build/Profile/BTHOMEHUBV3A=$(call Image/BuildNAND/$(1),$(1),BTHOMEHUBV3A)
@@ -513,7 +497,7 @@ define LegacyDevice/BTHOMEHUBV3A
 	kmod-ath9k wpad-mini \
 	swconfig uboot-envtools
 endef
-LEGACY_DEVICES += BTHOMEHUBV3AB
+LEGACY_DEVICES += BTHOMEHUBV3A
 
 Image/BuildKernel/Profile/DGN3500=$(call Image/BuildKernel/Template,DGN3500)
 Image/Build/Profile/DGN3500=$(call Image/BuildDGN3500/$(1),$(1),DGN3500)
@@ -585,14 +569,6 @@ define LegacyDevice/FRITZ7320
 endef
 LEGACY_DEVICES += FRITZ7320
 
-define Device/GR7000
-  DEVICE_PROFILE := GR7000
-  IMAGE_SIZE := 7808k
-  DEVICE_TITLE := Aztech GR7000
-  DEVICE_PACKAGES := kmod-ltq-deu-ar9 kmod-usb-dwc2 swconfig
-endef
-TARGET_DEVICES += GR7000
-
 define Device/H201L
   DEVICE_PROFILE := H201L
   IMAGE_SIZE := 7808k
@@ -627,8 +603,8 @@ endif
 ifeq ($(SUBTARGET),xrx200)
 
 # VR9
-P2812HNUF1_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
-P2812HNUF1_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+DEVICE_P2812HNUF1_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
+DEVICE_P2812HNUF1_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
 
 Image/BuildKernel/Profile/P2812HNUF1=$(call Image/BuildKernel/Template,P2812HNUF1)
 Image/Build/Profile/P2812HNUF1=$(call Image/BuildNAND/$(1),$(1),P2812HNUF1)
@@ -639,8 +615,8 @@ define LegacyDevice/P2812HNUF1
 endef
 LEGACY_DEVICES += P2812HNUF1
 
-P2812HNUF3_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
-P2812HNUF3_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+DEVICE_P2812HNUF3_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
+DEVICE_P2812HNUF3_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
 
 Image/BuildKernel/Profile/P2812HNUF3=$(call Image/BuildKernel/Template,P2812HNUF3)
 Image/Build/Profile/P2812HNUF3=$(call Image/BuildNAND/$(1),$(1),P2812HNUF3)
@@ -660,8 +636,8 @@ endef
 TARGET_DEVICES += ARV7519RW22
 
 
-BTHOMEHUBV5A_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
-BTHOMEHUBV5A_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+DEVICE_BTHOMEHUBV5A_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
+DEVICE_BTHOMEHUBV5A_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
 
 Image/BuildKernel/Profile/BTHOMEHUBV5A=$(call Image/BuildKernel/Template,BTHOMEHUBV5A)
 Image/Build/Profile/BTHOMEHUBV5A=$(call Image/BuildNAND/$(1),$(1),BTHOMEHUBV5A)
@@ -673,6 +649,7 @@ endef
 LEGACY_DEVICES += BTHOMEHUBV5A
 
 define Device/EASY80920NAND
+  $(Device/lantiqFullImage)
   DEVICE_PROFILE := EASY80920NAND
   IMAGE_SIZE := 64512k
   DEVICE_TITLE := Lantiq VR9 - EASY80920NAND
@@ -689,8 +666,8 @@ endef
 TARGET_DEVICES += EASY80920NOR
 
 
-FRITZ3370_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
-FRITZ3370_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
+DEVICE_FRITZ3370_UBIFS_OPTS:="-m 2048 -e 126KiB -c 4096"
+DEVICE_FRITZ3370_UBI_OPTS:="-m 2048 -p 128KiB -s 512"
 
 Image/BuildKernel/Profile/FRITZ3370=$(call Image/BuildKernelEVA/Template,FRITZ3370)
 Image/Build/Profile/FRITZ3370=$(call Image/BuildEVA/$(1),$(1),FRITZ3370)
@@ -769,6 +746,39 @@ define Device/VGV7519BRN
 endef
 TARGET_DEVICES += VGV7519BRN
 
+endif
+
+ifneq ($($(PROFILE)_UBI_OPTS),)
+  define Image/BuildNAND/squashfs
+	$(call prepare_generic_squashfs,$(KDIR)/root.$(1))
+	$(call Image/Build/UbinizeImage,$(2),,squashfs,$($(PROFILE)_UBI_OPTS))
+	$(call Image/Build/SysupgradeNAND,$(2),$(1),$(KDIR)/uImage-$(2))
+  endef
+
+  define Image/Build/ubifs
+	$(CP) $(KDIR)/root.ubifs $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs.ubifs
+  endef
+
+  define Image/Build/ubi
+	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs.ubi
+	$(CP) $(KDIR)/root-overlay.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs-overlay.ubi
+  endef
+
+  define Image/BuildEVA/ubi
+	$(CP) $(KDIR)/root.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs.ubi
+	$(CP) $(KDIR)/root-overlay.ubi $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs-overlay.ubi
+  endef
+
+ifneq ($($(PROFILE)_UBIFS_OPTS),)
+  define Image/BuildNAND/ubifs
+	$(call Image/Build/UbinizeImage,$(2),,ubifs,$($(PROFILE)_UBI_OPTS))
+	$(call Image/Build/SysupgradeNAND,$(2),$(1),$(KDIR)/uImage-$(2))
+  endef
+
+  define Image/BuildEVA/ubifs
+	$(CP) $(KDIR)/root.ubifs $(BIN_DIR)/$(IMG_PREFIX)-$(2)-rootfs.ubifs
+  endef
+endif
 endif
 
 define Image/Prepare/Profile
