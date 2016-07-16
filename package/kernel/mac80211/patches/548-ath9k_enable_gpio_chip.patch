@@ -18,7 +18,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  
  #include "common.h"
  #include "debug.h"
-@@ -959,6 +960,14 @@ struct ath_led {
+@@ -962,6 +963,14 @@ struct ath_led {
  	struct led_classdev cdev;
  };
  
@@ -33,7 +33,7 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
  struct ath_softc {
  	struct ieee80211_hw *hw;
  	struct device *dev;
-@@ -1013,6 +1022,9 @@ struct ath_softc {
+@@ -1016,6 +1025,9 @@ struct ath_softc {
  #ifdef CPTCFG_MAC80211_LEDS
  	const char *led_default_trigger;
  	struct list_head leds;
@@ -138,13 +138,13 @@ Signed-off-by: Felix Fietkau <nbd@nbd.name>
 +	gc->gchip.get_direction = ath9k_gpio_pin_get_dir;
 +	gc->gchip.get = ath9k_gpio_pin_get;
 +	gc->gchip.set = ath9k_gpio_pin_set;
-+	gc->gchip.owner = THIS_MODULE;
 +
 +	if (gpiochip_add(&gc->gchip)) {
 +		kfree(gc);
 +		return;
 +	}
 +
++	gc->gchip.owner = NULL;
 +	sc->gpiochip = gc;
 +	gc->sc = sc;
 +}
