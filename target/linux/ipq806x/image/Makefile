@@ -40,11 +40,8 @@ define Device/Default
 	KERNEL_DEPENDS = $$(wildcard $(DTS_DIR)/$$(DEVICE_DTS).dts)
 	KERNEL_INITRAMFS_PREFIX := $$(IMG_PREFIX)-$(1)-initramfs
 	KERNEL_PREFIX := $$(IMAGE_PREFIX)
-	IMAGES :=
-	KERNEL_IN_UBI :=
-	BOARD_NAME :=
 endef
-DEVICE_VARS += BOARD_NAME KERNEL_SIZE
+DEVICE_VARS += KERNEL_SIZE
 
 define Device/LegacyImage
 	KERNEL_SUFFIX := -uImage
@@ -62,7 +59,7 @@ define Device/UbiFit
 	KERNEL_IN_UBI := 1
 	IMAGES := nand-factory.ubi nand-sysupgrade.tar
 	IMAGE/nand-factory.ubi := append-ubi
-	IMAGE/nand-sysupgrade.tar := sysupgrade-nand
+	IMAGE/nand-sysupgrade.tar := sysupgrade-tar
 endef
 
 define Device/DniImage
@@ -76,7 +73,7 @@ define Device/DniImage
 	NETGEAR_HW_ID :=
 	IMAGES := factory.img sysupgrade.tar
 	IMAGE/factory.img := append-kernel | append-ubi | netgear-dni
-	IMAGE/sysupgrade.tar = sysupgrade-nand
+	IMAGE/sysupgrade.tar = sysupgrade-tar
 endef
 DEVICE_VARS += NETGEAR_BOARD_ID NETGEAR_HW_ID
 
@@ -160,7 +157,7 @@ define Device/EA8500
 	BOARD_NAME := ea8500
 	IMAGES := factory.bin sysupgrade.tar
 	IMAGE/factory.bin := append-kernel 3145728 | append-ubi
-	IMAGE/sysupgrade.tar := sysupgrade-nand
+	IMAGE/sysupgrade.tar := sysupgrade-tar
 	DEVICE_TITLE := Linksys EA8500
 	DEVICE_PACKAGES := ath10k-firmware-qca99x0
 endef

@@ -57,6 +57,16 @@ define Device/gl-ar300
 endef
 TARGET_DEVICES += gl-ar300
 
+define Device/gl-ar300m
+  DEVICE_TITLE := GL AR300M
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 uboot-envtools
+  BOARDNAME = GL-AR300M
+  IMAGE_SIZE = 16000k
+  CONSOLE = ttyS0,115200
+  MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),16000k(firmware),64k(art)ro
+endef
+TARGET_DEVICES += gl-ar300m
+
 define Device/gl-domino
   DEVICE_TITLE := GL Domino Pi
   DEVICE_PACKAGES := kmod-usb-core kmod-usb2
@@ -66,6 +76,16 @@ define Device/gl-domino
   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,16000k(firmware),64k(art)ro
 endef
 TARGET_DEVICES += gl-domino
+
+define Device/gl-mifi
+  DEVICE_TITLE := GL MIFI
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2
+  BOARDNAME = GL-MIFI
+  IMAGE_SIZE = 16000k
+  CONSOLE = ttyATH0,115200
+  MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,16000k(firmware),64k(art)ro
+endef
+TARGET_DEVICES += gl-mifi
 
 define Device/dr531
   DEVICE_TITLE := Wallys DR531
@@ -290,7 +310,7 @@ TARGET_DEVICES += rnx-n360rt
 define Device/mc-mac1200r
   $(Device/tplink-8mlzma)
   DEVICE_TITLE := MERCURY MAC1200R
-  DEVICE_PACKAGES := kmod-ath10k
+  DEVICE_PACKAGES := kmod-ath10k ath10k-firmware-qca988x
   BOARDNAME := MC-MAC1200R
   DEVICE_PROFILE := MAC1200R
   TPLINK_HWID := 0x12000001
@@ -382,7 +402,7 @@ TARGET_DEVICES += oolite
 
 define Device/NBG6616
   DEVICE_TITLE := ZyXEL NBG6616
-  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-usb-storage kmod-rtc-pcf8563 kmod-ath10k
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-usb-storage kmod-rtc-pcf8563 kmod-ath10k ath10k-firmware-qca988x
   BOARDNAME = NBG6616
   KERNEL_SIZE = 2048k
   IMAGE_SIZE = 15323k
@@ -456,8 +476,8 @@ TARGET_DEVICES += hiwifi-hc6361
 # - 28 bytes seama_header
 # - 36 bytes of META data (4-bytes aligned)
 define Build/seama-factory
-	( dd if=/dev/zero bs=64 count=1; cat $(word 1,$^) ) >$@.loader.tmp
-	( dd if=$@.loader.tmp bs=64k conv=sync; dd if=$(word 2,$^) ) >$@.tmp.0
+	( dd if=/dev/zero bs=64 count=1; cat $(IMAGE_KERNEL) ) >$@.loader.tmp
+	( dd if=$@.loader.tmp bs=64k conv=sync; dd if=$(IMAGE_ROOTFS) ) >$@.tmp.0
 	tail -c +65 $@.tmp.0 >$@.tmp.1
 	$(STAGING_DIR_HOST)/bin/seama \
 		-i $@.tmp.1 \
@@ -471,10 +491,10 @@ endef
 
 define Build/seama-sysupgrade
 	$(STAGING_DIR_HOST)/bin/seama \
-		-i $(word 1,$^) \
+		-i $(IMAGE_KERNEL) \
 		-m "dev=/dev/mtdblock/1" -m "type=firmware"
-	( dd if=$(word 1,$^).seama bs=64k conv=sync; dd if=$(word 2,$^) ) >$@
-	rm -f $(word 1,$^).seama
+	( dd if=$(IMAGE_KERNEL).seama bs=64k conv=sync; dd if=$(IMAGE_ROOTFS) ) >$@
+	rm -f $(IMAGE_KERNEL).seama
 endef
 
 define Build/seama-initramfs
@@ -485,7 +505,7 @@ define Build/seama-initramfs
 endef
 
 define Build/seama-pad-rootfs
-	$(STAGING_DIR_HOST)/bin/padjffs2 $(word 2,$^) -c 64 >>$@
+	$(STAGING_DIR_HOST)/bin/padjffs2 $(IMAGE_ROOTFS) -c 64 >>$@
 endef
 
 define Device/seama
@@ -524,7 +544,7 @@ endef
 define Device/qihoo-c301
 $(Device/seama)
   DEVICE_TITLE := Qihoo C301
-  DEVICE_PACKAGES :=  kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-ath10k
+  DEVICE_PACKAGES :=  kmod-usb-core kmod-usb2 kmod-ledtrig-usbdev kmod-ath10k ath10k-firmware-qca988x
   BOARDNAME = QIHOO-C301
   IMAGE_SIZE = 15744k
   MTDPARTS = spi0.0:256k(u-boot)ro,64k(u-boot-env),64k(devdata),64k(devconf),15744k(firmware),64k(warm_start),64k(action_image_config),64k(radiocfg)ro;spi0.1:15360k(upgrade2),1024k(privatedata)
