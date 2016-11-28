@@ -133,6 +133,7 @@ platform_check_image() {
 	v22rw-2x2|\
 	vocore|\
 	vr500|\
+	vocore2|\
 	w150m|\
 	w2914nsv2|\
 	w306r-v20|\

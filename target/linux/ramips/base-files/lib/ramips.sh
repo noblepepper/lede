@@ -454,6 +454,9 @@ ramips_board_detect() {
 	*"VoCore")
 		name="vocore"
 		;;
+	*"VoCore2")
+		name="vocore2"
+		;;
 	*"VR500")
 		name="vr500"
 		;;
